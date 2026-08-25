@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+{% block title %}The Loop — Settings{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Settings</h1>
+        <p class="page-subtitle">Configure LLM provider, brand assets, and system preferences</p>
+    </div>
+</div>
+
+<div class="grid grid-2">
+    <!-- LLM Configuration -->
+    <div class="card fade-in">
+        <div class="card-header">
+            <span class="card-title">🤖 LLM Provider</span>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Active Provider</label>
+            <select class="form-select">
+                <option {% if llm_config.provider == 'openai' %}selected{% endif %}>OpenAI (GPT-4o)</option>
+                <option {% if llm_config.provider == 'anthropic' %}selected{% endif %}>Anthropic (Claude Sonnet)</option>
+                <option {% if llm_config.provider == 'google' %}selected{% endif %}>Google (Gemini 2.5 Flash)</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Model</label>
+            <input type="text" class="form-input" value="{{ llm_config.model }}" placeholder="Leave blank for provider default">
+        </div>
+
+        <div style="margin-top:var(--space-lg)">
+            <div class="card-label" style="margin-bottom:var(--space-sm)">API Key Status</div>
+            <div style="display:flex; flex-direction:column; gap:var(--space-sm)">
+                <div class="status-indicator">
+                    <span class="status-dot {% if llm_config.has_openai %}online{% endif %}"></span>
+                    <span>OpenAI — {{ 'Configured' if llm_config.has_openai else 'Not set' }}</span>
+                </div>
+                <div class="status-indicator">
+                    <span class="status-dot {% if llm_config.has_anthropic %}online{% endif %}"></span>
+                    <span>Anthropic — {{ 'Configured' if llm_config.has_anthropic else 'Not set' }}</span>
+                </div>
+                <div class="status-indicator">
+                    <span class="status-dot {% if llm_config.has_google %}online{% endif %}"></span>
+                    <span>Google — {{ 'Configured' if llm_config.has_google else 'Not set' }}</span>
+                </div>
+            </div>
+            <p style="font-size:0.78rem; color:var(--text-muted); margin-top:var(--space-md)">
+                API keys are set via the <code>.env</code> file. Copy <code>.env.example</code> to <code>.env</code> and add your keys.
+            </p>
+        </div>
+    </div>
+
+    <!-- Brand Kit -->
+    <div class="card fade-in" style="animation-delay:0.05s">
+        <div class="card-header">
+            <span class="card-title">🎨 Brand Kit</span>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Primary Color (Ink)</label>
+            <div style="display:flex; gap:var(--space-sm); align-items:center">
+                <input type="color" value="{{ brand.primary_color }}" style="width:40px; height:36px; border:none; cursor:pointer; border-radius:var(--radius-sm)">
+                <input type="text" class="form-input" value="{{ brand.primary_color }}" style="flex:1">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Secondary Color (Deep Blue)</label>
+            <div style="display:flex; gap:var(--space-sm); align-items:center">
+                <input type="color" value="{{ brand.secondary_color }}" style="width:40px; height:36px; border:none; cursor:pointer; border-radius:var(--radius-sm)">
+                <input type="text" class="form-input" value="{{ brand.secondary_color }}" style="flex:1">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Accent Color (Electric Cyan)</label>
+            <div style="display:flex; gap:var(--space-sm); align-items:center">
+                <input type="color" value="{{ brand.accent_color }}" style="width:40px; height:36px; border:none; cursor:pointer; border-radius:var(--radius-sm)">
+                <input type="text" class="form-input" value="{{ brand.accent_color }}" style="flex:1">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Primary Font</label>
+            <input type="text" class="form-input" value="{{ brand.font_primary }}">
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Fallback Font</label>
+            <input type="text" class="form-input" value="{{ brand.font_fallback }}">
+        </div>
+    </div>
+</div>
+
+<!-- Platform Connections -->
+<div class="card fade-in" style="margin-top: var(--space-xl)">
+    <div class="card-header">
+        <span class="card-title">🔗 Platform Connections</span>
+        <span class="card-label">API Status</span>
+    </div>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Platform</th>
+                <th>Status</th>
+                <th>Capabilities</th>
+                <th>Key Variable</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td style="font-weight:600">📸 Instagram</td>
+                <td><span class="status-indicator"><span class="status-dot"></span> Check .env</span></td>
+                <td style="font-size:0.82rem; color:var(--text-muted)">Reels, Carousels, Stories, Metrics</td>
+                <td style="font-family:var(--font-mono); font-size:0.78rem">INSTAGRAM_ACCESS_TOKEN</td>
+            </tr>
+            <tr>
+                <td style="font-weight:600">🎵 TikTok</td>
+                <td><span class="status-indicator"><span class="status-dot"></span> Check .env</span></td>
+                <td style="font-size:0.82rem; color:var(--text-muted)">Video Upload, Trending, Metrics</td>
+                <td style="font-family:var(--font-mono); font-size:0.78rem">TIKTOK_ACCESS_TOKEN</td>
+            </tr>
+            <tr>
+                <td style="font-weight:600">▶️ YouTube</td>
+                <td><span class="status-indicator"><span class="status-dot"></span> Check .env</span></td>
+                <td style="font-size:0.82rem; color:var(--text-muted)">Shorts, Videos, Trending, Analytics</td>
+                <td style="font-family:var(--font-mono); font-size:0.78rem">YOUTUBE_API_KEY</td>
+            </tr>
+            <tr>
+                <td style="font-weight:600">𝕏 X / Twitter</td>
+                <td><span class="status-indicator"><span class="status-dot"></span> Check .env</span></td>
+                <td style="font-size:0.82rem; color:var(--text-muted)">Tweets, Threads, Trending, Metrics</td>
+                <td style="font-family:var(--font-mono); font-size:0.78rem">X_BEARER_TOKEN</td>
+            </tr>
+            <tr>
+                <td style="font-weight:600">🟠 Reddit</td>
+                <td><span class="status-indicator"><span class="status-dot"></span> Check .env</span></td>
+                <td style="font-size:0.82rem; color:var(--text-muted)">Research Only (trending, niche discovery)</td>
+                <td style="font-family:var(--font-mono); font-size:0.78rem">REDDIT_CLIENT_ID</td>
+            </tr>
+            <tr>
+                <td style="font-weight:600">💼 LinkedIn</td>
+                <td><span class="status-indicator"><span class="status-dot"></span> Check .env</span></td>
+                <td style="font-size:0.82rem; color:var(--text-muted)">Posts, Articles, Metrics</td>
+                <td style="font-family:var(--font-mono); font-size:0.78rem">LINKEDIN_ACCESS_TOKEN</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- Scheduled Jobs -->
+<div class="card fade-in" style="margin-top: var(--space-xl)">
+    <div class="card-header">
+        <span class="card-title">⏰ Scheduled Jobs</span>
+        <span class="card-label">Pipeline Automation</span>
+    </div>
+
+    {% if scheduled_jobs %}
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Job</th>
+                <th>Trigger</th>
+                <th>Next Run</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for job in scheduled_jobs %}
+            <tr>
+                <td style="font-weight:600">{{ job.name }}</td>
+                <td style="font-family:var(--font-mono); font-size:0.82rem">{{ job.trigger }}</td>
+                <td>{{ job.next_run or 'Not scheduled' }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state" style="padding:var(--space-xl)">
+        <div class="empty-state-desc">
+            No scheduled jobs yet. The pipeline can be configured to run automatically on a schedule.
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

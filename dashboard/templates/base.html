@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="The Loop — Autonomous multi-agent content creation engine with real-time approval gates.">
+    <title>{% block title %}The Loop{% endblock %}</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>∞</text></svg>">
+</head>
+<body>
+    <div class="app-layout">
+        <!-- Sidebar — Antigravity Glass Panel -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <div class="logo-icon">∞</div>
+                    <div>
+                        <div class="logo-text">The Loop</div>
+                        <div class="logo-subtitle">Content Engine</div>
+                    </div>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <div class="nav-section-label">Dashboard</div>
+                <a href="/" class="nav-link {{ 'active' if request.url.path == '/' }}">
+                    <span class="nav-icon">⌘</span>
+                    <span>Command Center</span>
+                </a>
+                <a href="/approval" class="nav-link {{ 'active' if request.url.path == '/approval' }}">
+                    <span class="nav-icon">✓</span>
+                    <span>Approvals</span>
+                    <span class="badge" id="approval-badge" style="display:none">1</span>
+                </a>
+
+                <div class="nav-section-label">Intelligence</div>
+                <a href="/analytics" class="nav-link {{ 'active' if request.url.path == '/analytics' }}">
+                    <span class="nav-icon">📊</span>
+                    <span>Analytics</span>
+                </a>
+
+                <div class="nav-section-label">System</div>
+                <a href="/settings" class="nav-link {{ 'active' if request.url.path == '/settings' }}">
+                    <span class="nav-icon">⚙</span>
+                    <span>Settings</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="status-indicator">
+                    <span class="status-dot online" id="connection-dot"></span>
+                    <span id="connection-label">Connected</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>

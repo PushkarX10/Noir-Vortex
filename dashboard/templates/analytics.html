@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+{% block title %}The Loop — Analytics{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Analytics</h1>
+        <p class="page-subtitle">Performance metrics and insights from The Analyst</p>
+    </div>
+</div>
+
+{% if analytics %}
+<!-- Aggregate Metrics -->
+{% set agg = analytics.get('aggregate_metrics', {}) %}
+<div class="grid grid-4 fade-in" style="margin-bottom: var(--space-xl)">
+    <div class="card">
+        <div class="stat-value">{{ '{:,}'.format(agg.get('total_views', 0)) }}</div>
+        <div class="stat-label">Total Views</div>
+    </div>
+    <div class="card">
+        <div class="stat-value">{{ '%.1f' | format(agg.get('avg_engagement_rate', 0)) }}%</div>
+        <div class="stat-label">Avg Engagement Rate</div>
+    </div>
+    <div class="card">
+        <div class="stat-value">{{ '%.0f' | format(agg.get('avg_retention_rate', 0)) }}%</div>
+        <div class="stat-label">Avg Retention</div>
+    </div>
+    <div class="card">
+        <div class="stat-value">+{{ agg.get('total_new_followers', 0) }}</div>
+        <div class="stat-label">New Followers</div>
+        <div class="stat-change up">↑ Growth</div>
+    </div>
+</div>
+
+<!-- Platform Breakdown -->
+{% set platforms = analytics.get('platform_breakdown', {}) %}
+{% if platforms %}
+<div class="card fade-in" style="margin-bottom: var(--space-xl)">
+    <div class="card-header">
+        <span class="card-title">Platform Breakdown</span>
+        <span class="card-label">{{ platforms | length }} Platforms</span>
+    </div>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Platform</th>
+                <th>Views</th>
+                <th>Engagement</th>
+                <th>Growth</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for platform, data in platforms.items() %}
+            <tr>
+                <td style="font-weight:600; color:var(--text-primary); text-transform:capitalize">
+                    {{ platform }}
+                </td>
+                <td>{{ '{:,}'.format(data.get('views', 0)) }}</td>
+                <td>{{ '%.1f' | format(data.get('engagement', 0)) }}%</td>
+                <td>
+                    {% if data.get('growth', 0) > 0 %}
+                    <span class="stat-change up">+{{ data.growth }}</span>
+                    {% else %}
+                    <span class="stat-change">{{ data.get('growth', 0) }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+<!-- Top Performing Posts -->
+{% set top_posts = analytics.get('top_performing_posts', []) %}
+{% if top_posts %}
+<div class="card fade-in" style="margin-bottom: var(--space-xl)">
+    <div class="card-header">
+        <span class="card-title">Top Performing Posts</span>
+        <span class="card-label">{{ top_posts | length }} posts</span>
+    </div>
+    {% for post in top_posts %}
+    <div class="card" style="margin-bottom: var(--space-md); background: var(--surface)">
+        <div style="display:flex; justify-content:space-between; align-items:center">
+            <div>
+                <div style="font-weight:600; color:var(--text-primary)">
+                    {{ post.get('content_type', 'Post') | title }} on {{ post.get('platform', 'Unknown') | title }}
+                </div>
+                <div style="font-size:0.82rem; color:var(--text-muted); margin-top:4px">
+                    {{ post.get('why_it_worked', 'Analysis pending...') }}
+                </div>
+            </div>
+            <div style="text-align:right">
+                <div class="stat-value" style="font-size:1.3rem">{{ '{:,}'.format(post.get('views', 0)) }}</div>
+                <div class="stat-label">views</div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+{% else %}
+<!-- No analytics yet -->
+<div class="card fade-in">
+    <div class="empty-state">
+        <div class="empty-state-icon">📊</div>
+        <div class="empty-state-title">No Analytics Yet</div>
+        <div class="empty-state-desc">
+            Analytics will appear here after The Analyst processes your first published content.
+            Start a pipeline cycle to begin!
+        </div>
+        <a href="/" class="btn btn-primary">← Start a Pipeline</a>
+    </div>
+</div>
+{% endif %}
+
+<!-- Insights -->
+{% if insights %}
+<div class="card fade-in">
+    <div class="card-header">
+        <span class="card-title">💡 Actionable Insights</span>
+        <span class="card-label">From The Analyst</span>
+    </div>
+    {% for insight in insights %}
+    <div style="padding: var(--space-md); border-left: 3px solid var(--accent); margin-bottom: var(--space-md); background: var(--accent-dim); border-radius: 0 var(--radius-md) var(--radius-md) 0">
+        <span style="color:var(--text-primary); font-size:0.9rem">{{ insight }}</span>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Publish Results -->
+{% if publish_results %}
+<div class="card fade-in" style="margin-top: var(--space-xl)">
+    <div class="card-header">
+        <span class="card-title">Recent Publications</span>
+        <span class="card-label">{{ publish_results | length }} posts</span>
+    </div>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Platform</th>
+                <th>Status</th>
+                <th>Post ID</th>
+                <th>Published At</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for result in publish_results %}
+            <tr>
+                <td style="text-transform:capitalize; font-weight:600">{{ result.get('platform', '—') }}</td>
+                <td>
+                    {% if result.get('status') == 'published' %}
+                    <span class="agent-status completed">✓ Published</span>
+                    {% elif result.get('status') == 'failed' %}
+                    <span class="agent-status error">✕ Failed</span>
+                    {% else %}
+                    <span class="agent-status idle">{{ result.get('status', '—') }}</span>
+                    {% endif %}
+                </td>
+                <td style="font-family:var(--font-mono); font-size:0.78rem">
+                    {% if result.get('post_url') %}
+                    <a href="{{ result.post_url }}" target="_blank">{{ result.get('post_id', '—') }}</a>
+                    {% else %}
+                    {{ result.get('post_id', '—') }}
+                    {% endif %}
+                </td>
+                <td style="color:var(--text-muted)">{{ result.get('published_at', '—') }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+{% endblock %}
