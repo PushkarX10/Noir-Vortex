@@ -18,7 +18,22 @@ import sys
 from pathlib import Path
 
 # Add project root to path
-sys.path.insert(0, str(Path(__file__).parent))
+_project_root = Path(__file__).parent.resolve()
+sys.path.insert(0, str(_project_root))
+
+# If running outside .venv and dependencies are missing, auto-delegate to project .venv
+_venv_python = (
+    _project_root / ".venv" / "Scripts" / "python.exe"
+    if sys.platform == "win32"
+    else _project_root / ".venv" / "bin" / "python"
+)
+if _venv_python.exists() and Path(sys.executable).resolve() != _venv_python.resolve():
+    try:
+        from langgraph.graph import StateGraph  # noqa: F401
+    except (ImportError, ModuleNotFoundError):
+        import subprocess
+        sys.exit(subprocess.call([str(_venv_python)] + sys.argv, cwd=str(_project_root)))
+
 
 # Ensure UTF-8 output encoding on Windows terminals
 if sys.platform == "win32":
