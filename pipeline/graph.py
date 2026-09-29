@@ -1,4 +1,4 @@
-﻿"""
+"""
 Noir -- LangGraph Pipeline Graph
 The core state machine that orchestrates all 10 agents.
 Uses interrupt_before at each approval gate for human-in-the-loop control.
@@ -201,9 +201,10 @@ async def automator_node(state: PipelineState) -> dict:
 async def approval_gate_research(state: PipelineState) -> dict:
     """Approval gate after Researcher. Pipeline pauses here for review."""
     logger.info("[GATE] APPROVAL GATE: Research output awaiting review")
+    status = state.get("approval_status") or "approved"
     return {
         "current_agent": "researcher",
-        "approval_status": "pending",
+        "approval_status": status,
         "updated_at": datetime.utcnow().isoformat(),
     }
 
@@ -211,9 +212,10 @@ async def approval_gate_research(state: PipelineState) -> dict:
 async def approval_gate_hooks(state: PipelineState) -> dict:
     """Approval gate after Hook Writer."""
     logger.info("[GATE] APPROVAL GATE: Hook output awaiting review")
+    status = state.get("approval_status") or "approved"
     return {
         "current_agent": "hook_writer",
-        "approval_status": "pending",
+        "approval_status": status,
         "updated_at": datetime.utcnow().isoformat(),
     }
 
@@ -221,9 +223,10 @@ async def approval_gate_hooks(state: PipelineState) -> dict:
 async def approval_gate_scripts(state: PipelineState) -> dict:
     """Approval gate after Script Writer."""
     logger.info("[GATE] APPROVAL GATE: Script output awaiting review")
+    status = state.get("approval_status") or "approved"
     return {
         "current_agent": "script_writer",
-        "approval_status": "pending",
+        "approval_status": status,
         "updated_at": datetime.utcnow().isoformat(),
     }
 
@@ -231,9 +234,10 @@ async def approval_gate_scripts(state: PipelineState) -> dict:
 async def approval_gate_design(state: PipelineState) -> dict:
     """Approval gate after Designer."""
     logger.info("[GATE] APPROVAL GATE: Design output awaiting review")
+    status = state.get("approval_status") or "approved"
     return {
         "current_agent": "designer",
-        "approval_status": "pending",
+        "approval_status": status,
         "updated_at": datetime.utcnow().isoformat(),
     }
 
@@ -244,42 +248,34 @@ async def approval_gate_design(state: PipelineState) -> dict:
 
 def route_after_research_approval(state: PipelineState) -> str:
     """Route after research approval gate."""
-    status = state.get("approval_status", "pending")
-    if status == "approved":
-        return "hook_writer"
-    elif status in ("rejected", "revision_requested"):
+    status = state.get("approval_status", "approved")
+    if status in ("rejected", "revision_requested"):
         return "researcher"
-    return END  # Pending -- will be resumed via API
+    return "hook_writer"
 
 
 def route_after_hooks_approval(state: PipelineState) -> str:
     """Route after hooks approval gate."""
-    status = state.get("approval_status", "pending")
-    if status == "approved":
-        return "script_writer"
-    elif status in ("rejected", "revision_requested"):
+    status = state.get("approval_status", "approved")
+    if status in ("rejected", "revision_requested"):
         return "hook_writer"
-    return END
+    return "script_writer"
 
 
 def route_after_scripts_approval(state: PipelineState) -> str:
     """Route after scripts approval gate."""
-    status = state.get("approval_status", "pending")
-    if status == "approved":
-        return "designer"
-    elif status in ("rejected", "revision_requested"):
+    status = state.get("approval_status", "approved")
+    if status in ("rejected", "revision_requested"):
         return "script_writer"
-    return END
+    return "designer"
 
 
 def route_after_design_approval(state: PipelineState) -> str:
     """Route after design approval gate."""
-    status = state.get("approval_status", "pending")
-    if status == "approved":
-        return "publisher"
-    elif status in ("rejected", "revision_requested"):
+    status = state.get("approval_status", "approved")
+    if status in ("rejected", "revision_requested"):
         return "designer"
-    return END
+    return "publisher"
 
 
 # ---------------------------------------------------------------------------

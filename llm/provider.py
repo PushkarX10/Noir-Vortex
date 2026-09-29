@@ -128,9 +128,12 @@ async def _call_gemini(
                 return ""
             except httpx.HTTPStatusError as e:
                 last_error = e
-                if e.response.status_code == 404:
-                    continue
-                raise
+                logger.warning(f"Google Gemini model '{mod}' returned HTTP {e.response.status_code}. Trying next fallback...")
+                continue
+            except Exception as e:
+                last_error = e
+                logger.warning(f"Google Gemini model '{mod}' request failed: {e}. Trying next fallback...")
+                continue
 
     if last_error:
         raise last_error

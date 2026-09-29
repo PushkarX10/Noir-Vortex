@@ -1,4 +1,4 @@
-﻿"""
+"""
 Noir -- Shared Pipeline State
 TypedDict defining the full state schema that flows through Noir.
 Every agent reads from and writes to this shared state.
@@ -147,8 +147,9 @@ def state_summary(state: dict) -> dict:
         "trends_count": len(state.get("trends", [])),
         "ideas_count": len(state.get("content_ideas", [])),
         "hooks_count": len(state.get("hooks", [])),
+        "scripts_count": len(state.get("scripts", [])) if state.get("scripts") else (1 if state.get("script") else 0),
         "has_script": bool(state.get("script")),
-        "designs_count": len(state.get("design_assets", [])),
+        "designs_count": len(state.get("design_assets", [])) or len(state.get("design_briefs", [])),
         "published_count": len(state.get("publish_results", [])),
         "has_analytics": bool(state.get("analytics")),
         # Buzz integration summaries

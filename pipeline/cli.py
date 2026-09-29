@@ -98,11 +98,13 @@ class TerminalPipelineRunner:
             try:
                 # Run the graph until the next gate or completion
                 result = await graph.ainvoke(current_input, config)
-                if result:
+                state_snapshot = graph.get_state(config)
+                if state_snapshot and state_snapshot.values:
+                    state.update(state_snapshot.values)
+                elif result:
                     state.update(result)
 
                 # Check if we hit an approval gate
-                state_snapshot = graph.get_state(config)
                 next_nodes = state_snapshot.next if state_snapshot else ()
 
                 if not next_nodes:
@@ -165,7 +167,12 @@ class TerminalPipelineRunner:
 
         # Fetch Sentinel quality score if present
         sentinel_scores = state.get("sentinel_scores", {})
-        agent_score = sentinel_scores.get(agent_key, {}).get("overall", 92)
+        agent_eval = sentinel_scores.get(agent_key, {})
+        agent_score = (
+            agent_eval.get("overall")
+            or agent_eval.get("quality_score", {}).get("total")
+            or 92
+        )
 
         print(f"\n{YELLOW}{BOLD}──────────────────────────────────────────────────────────────────────{RESET}")
         print(f"{YELLOW}{BOLD}⏸  CHECKPOINT: {title}{RESET}")
@@ -186,9 +193,12 @@ class TerminalPipelineRunner:
                 print(f"   👉 \"{h.get('text', h.get('hook', 'N/A'))}\" ({h.get('hook_type', 'Hook')})")
         elif agent_key == "script_writer":
             scripts = state.get("scripts", [])
-            print(f"   Produced {len(scripts)} scripts ready for design & voiceover.")
+            has_script = bool(state.get("script"))
+            count = len(scripts) if scripts else (1 if has_script else 0)
+            print(f"   Produced {count} script(s) ready for design & voiceover.")
         elif agent_key == "designer":
-            print(f"   Visual assets & thumbnails generated. Ready for multi-channel publishing.")
+            briefs = state.get("design_briefs", [])
+            print(f"   Formulated {len(briefs)} visual asset brief(s). Ready for multi-channel publishing.")
 
         print(f"{YELLOW}{BOLD}──────────────────────────────────────────────────────────────────────{RESET}")
 
@@ -197,6 +207,8 @@ class TerminalPipelineRunner:
                 print(f"{GREEN}✓ [Autopilot] Sentinel score {agent_score}% >= {self.min_quality_score}%. Auto-approved!{RESET}\n")
                 ApprovalGate.process_approval(agent_key, "approve", "Autopilot auto-clearance")
                 graph.update_state(config, {"approval_status": "approved", "current_agent": agent_key})
+                state["approval_status"] = "approved"
+                state["current_agent"] = agent_key
                 self.audit.append("approval_approved", agent_key, self.cycle_number, {"mode": "autopilot", "score": agent_score})
                 return True
             else:
@@ -213,12 +225,17 @@ class TerminalPipelineRunner:
                 print(f"{GREEN}✓ Approved! Moving to next stage...{RESET}\n")
                 ApprovalGate.process_approval(agent_key, "approve")
                 graph.update_state(config, {"approval_status": "approved", "current_agent": agent_key})
+                state["approval_status"] = "approved"
+                state["current_agent"] = agent_key
                 self.audit.append("approval_approved", agent_key, self.cycle_number, {"action": "approve"})
                 return True
             elif choice in ("r", "revise"):
                 feedback = input("Enter steering feedback for regeneration: ").strip()
                 ApprovalGate.process_approval(agent_key, "revision_requested", feedback)
                 graph.update_state(config, {"approval_status": "revision_requested", "steering_feedback": feedback, "current_agent": agent_key})
+                state["approval_status"] = "revision_requested"
+                state["steering_feedback"] = feedback
+                state["current_agent"] = agent_key
                 self.audit.append("approval_revision", agent_key, self.cycle_number, {"feedback": feedback})
                 print(f"{YELLOW}⟳ Rerunning {agent_key} with steering instructions...{RESET}\n")
                 return True
