@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 # Provider default models
 PROVIDER_MODELS = {
-    "google": "gemini-2.5-flash",
+    "google": "gemini-3.5-flash",
     "openai": "gpt-4o",
     "anthropic": "claude-3-7-sonnet-20250219",
 }
@@ -83,9 +83,12 @@ async def _call_gemini(
     max_tokens: int,
     api_key: str,
 ) -> str:
-    """Call Google Gemini REST API."""
+    """Call Google Gemini REST API with automatic model fallback."""
     clean_model = model.replace("gemini/", "").replace("google/", "")
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{clean_model}:generateContent?key={api_key}"
+    models_to_try = [clean_model]
+    for fallback in ("gemini-3.5-flash", "gemini-3-flash-preview", "gemini-flash-latest"):
+        if fallback not in models_to_try:
+            models_to_try.append(fallback)
 
     # Build Gemini content structure
     contents = []
@@ -109,16 +112,30 @@ async def _call_gemini(
             "parts": [{"text": system_prompt}]
         }
 
+    last_error = None
     async with httpx.AsyncClient(timeout=60.0) as client:
-        resp = await client.post(url, json=payload)
-        resp.raise_for_status()
-        data = resp.json()
-        candidates = data.get("candidates", [])
-        if candidates and "content" in candidates[0]:
-            parts = candidates[0]["content"].get("parts", [])
-            if parts:
-                return parts[0].get("text", "")
-        return ""
+        for mod in models_to_try:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{mod}:generateContent?key={api_key}"
+            try:
+                resp = await client.post(url, json=payload)
+                resp.raise_for_status()
+                data = resp.json()
+                candidates = data.get("candidates", [])
+                if candidates and "content" in candidates[0]:
+                    parts = candidates[0]["content"].get("parts", [])
+                    if parts:
+                        return parts[0].get("text", "")
+                return ""
+            except httpx.HTTPStatusError as e:
+                last_error = e
+                if e.response.status_code == 404:
+                    continue
+                raise
+
+    if last_error:
+        raise last_error
+    return ""
+
 
 
 async def _call_openai(

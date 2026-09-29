@@ -23,7 +23,7 @@ class LLMConfig:
     DEFAULTS = {
         "openai": "gpt-4o",
         "anthropic": "claude-sonnet-4-20250514",
-        "google": "gemini/gemini-2.5-flash",
+        "google": "gemini-3.5-flash",
     }
 
     # API keys (LiteLLM reads these from env automatically)
