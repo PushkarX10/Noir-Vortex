@@ -40,15 +40,6 @@ data/*.sqlite
 # Output files
 output/
 
-# Node & Frontend
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-.pnpm-store/
-VortexUI-main/node_modules/
-
 # OS Specific
 .DS_Store
 Thumbs.db
