@@ -173,10 +173,25 @@ GOOGLE_API_KEY=your_gemini_api_key
 ```
 
 ### 5. Launch Noir
+
+Noir can run **100% in the terminal (zero UI or web server required)** or with the **high-tech React web dashboard**:
+
+#### Option A: Terminal CLI Runner (No UI / Headless)
+```bash
+# Interactive Human-in-the-Loop CLI (prompts at approval gates)
+python main.py --cli
+
+# Fully Autonomous Autopilot CLI (auto-clears gates meeting Sentinel score threshold)
+python main.py --cli --autopilot
+
+# Specify cycle number
+python main.py --cli --cycle 2
+```
+
+#### Option B: Web Dashboard & React UI
 ```bash
 python main.py
 ```
-
 Open your browser and navigate to:
 👉 **[http://localhost:8000](http://localhost:8000)**
 
