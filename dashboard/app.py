@@ -1,5 +1,5 @@
-"""
-The Loop — FastAPI Dashboard Application
+﻿"""
+The Loop â€” FastAPI Dashboard Application
 REST API + WebSocket for real-time agent monitoring and approval management.
 """
 
@@ -414,6 +414,104 @@ async def api_get_history():
     return JSONResponse(pipeline_mgr.history)
 
 
+
+
+# ---------------------------------------------------------------------------
+# Buzz-Integrated API Routes (Sentinel, Audit, Workflows, Context)
+# ---------------------------------------------------------------------------
+
+@app.get("/api/sentinel/scores")
+async def api_sentinel_scores():
+    """Get current sentinel quality scores for all agents."""
+    scores = pipeline_mgr.current_state.get("sentinel_scores", {})
+    return JSONResponse(scores)
+
+
+@app.get("/api/audit/trail")
+async def api_audit_trail(agent: str = None, limit: int = 50):
+    """Get the audit trail, optionally filtered by agent."""
+    trail = pipeline_mgr.current_state.get("audit_trail", [])
+    if agent:
+        trail = [e for e in trail if e.get("agent") == agent]
+    return JSONResponse(trail[-limit:])
+
+
+@app.get("/api/audit/verify")
+async def api_audit_verify():
+    """Verify the integrity of the audit chain."""
+    from agents.sentinel import SentinelAgent
+    trail = pipeline_mgr.current_state.get("audit_trail", [])
+    is_valid = SentinelAgent.verify_audit_chain(trail)
+    return JSONResponse({
+        "valid": is_valid,
+        "entries": len(trail),
+        "last_hash": trail[-1].get("hash", "")[:16] + "..." if trail else "empty",
+    })
+
+
+@app.get("/api/context/briefs")
+async def api_context_briefs():
+    """Get current cross-agent context briefs."""
+    briefs = pipeline_mgr.current_state.get("context_briefs", {})
+    return JSONResponse(briefs)
+
+
+@app.get("/api/context/insights")
+async def api_cross_agent_insights():
+    """Get cross-agent insights."""
+    insights = pipeline_mgr.current_state.get("cross_agent_insights", [])
+    return JSONResponse(insights)
+
+
+@app.get("/api/context/memory")
+async def api_cycle_memory():
+    """Get cycle memory (cross-run learning)."""
+    memory = pipeline_mgr.current_state.get("cycle_memory", {})
+    return JSONResponse(memory)
+
+
+@app.get("/api/workflows")
+async def api_get_workflows():
+    """Get all workflow definitions."""
+    workflows = pipeline_mgr.current_state.get("workflow_definitions", [])
+    return JSONResponse(workflows)
+
+
+@app.get("/api/workflows/recommendations")
+async def api_schedule_recommendations():
+    """Get schedule and automation recommendations."""
+    recommendations = pipeline_mgr.current_state.get("schedule_recommendations", [])
+    automation = pipeline_mgr.current_state.get("automation_insights", [])
+    return JSONResponse({
+        "schedule_recommendations": recommendations,
+        "automation_insights": automation,
+    })
+
+
+@app.get("/api/agents")
+async def api_get_agents_enhanced():
+    """Get the list of all agents (original + Buzz) and their current status."""
+    from agents.manager import ManagerAgent
+    mgr = ManagerAgent()
+
+    if pipeline_mgr.current_state:
+        report = mgr.get_status_report(pipeline_mgr.current_state)
+        statuses = report.get("agent_statuses", {})
+    else:
+        statuses = {}
+
+    # Ensure all 10 agents are represented
+    all_agents = [
+        "researcher", "hook_writer", "script_writer", "designer",
+        "publisher", "analyst", "sentinel", "collaborator", "automator",
+    ]
+    for agent in all_agents:
+        if agent not in statuses:
+            statuses[agent] = "idle"
+
+    return JSONResponse(statuses)
+
+
 # ---------------------------------------------------------------------------
 # WebSocket endpoint
 # ---------------------------------------------------------------------------
@@ -446,3 +544,4 @@ async def websocket_endpoint(websocket: WebSocket):
     except WebSocketDisconnect:
         pipeline_mgr.websocket_connections.remove(websocket)
         logger.info(f"WebSocket disconnected. Total: {len(pipeline_mgr.websocket_connections)}")
+

@@ -1,6 +1,6 @@
-"""
-The Loop — Shared Pipeline State
-TypedDict defining the full state schema that flows through The Loop.
+﻿"""
+Noir -- Shared Pipeline State
+TypedDict defining the full state schema that flows through Noir.
 Every agent reads from and writes to this shared state.
 """
 
@@ -46,7 +46,7 @@ def _replace(left: Any, right: Any) -> Any:
 
 class PipelineState(TypedDict, total=False):
     """
-    Full pipeline state flowing through The Loop.
+    Full pipeline state flowing through Noir.
     Each agent reads relevant fields and writes its outputs.
     """
 
@@ -76,6 +76,20 @@ class PipelineState(TypedDict, total=False):
     analytics: Annotated[dict, _merge_dicts]
     insights: Annotated[list[str], _merge_lists]
 
+    # --- Sentinel Outputs (Agent 08 -- Buzz integration) ---
+    sentinel_scores: Annotated[dict, _merge_dicts]
+    audit_trail: Annotated[list[dict], _merge_lists]
+
+    # --- Collaborator Outputs (Agent 09 -- Buzz integration) ---
+    context_briefs: Annotated[dict, _merge_dicts]
+    cross_agent_insights: Annotated[list[dict], _merge_lists]
+    cycle_memory: Annotated[dict, _merge_dicts]
+
+    # --- Automator Outputs (Agent 10 -- Buzz integration) ---
+    workflow_definitions: Annotated[list[dict], _merge_lists]
+    schedule_recommendations: Annotated[list[dict], _merge_lists]
+    automation_insights: Annotated[list[str], _merge_lists]
+
     # --- Pipeline Control ---
     current_agent: str
     approval_status: str          # "pending" | "approved" | "rejected" | "revision_requested"
@@ -104,6 +118,16 @@ def initial_state(cycle_number: int = 1) -> dict:
         "publish_results": [],
         "analytics": {},
         "insights": [],
+        # Buzz integration fields
+        "sentinel_scores": {},
+        "audit_trail": [],
+        "context_briefs": {},
+        "cross_agent_insights": [],
+        "cycle_memory": {},
+        "workflow_definitions": [],
+        "schedule_recommendations": [],
+        "automation_insights": [],
+        # Pipeline control
         "current_agent": "researcher",
         "approval_status": "",
         "human_feedback": "",
@@ -127,6 +151,11 @@ def state_summary(state: dict) -> dict:
         "designs_count": len(state.get("design_assets", [])),
         "published_count": len(state.get("publish_results", [])),
         "has_analytics": bool(state.get("analytics")),
+        # Buzz integration summaries
+        "sentinel_scores": state.get("sentinel_scores", {}),
+        "audit_entries": len(state.get("audit_trail", [])),
+        "active_workflows": len(state.get("workflow_definitions", [])),
+        "has_context_briefs": bool(state.get("context_briefs")),
         "error": state.get("error_message", ""),
         "updated_at": state.get("updated_at", ""),
     }

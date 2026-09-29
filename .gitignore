@@ -60,3 +60,6 @@ desktop.ini
 *.sublime-project
 *.sublime-workspace
 .gemini/
+
+# Reference repositories & third-party bundles
+buzz/

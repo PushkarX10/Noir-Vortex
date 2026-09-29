@@ -1,7 +1,12 @@
-"""
-The Loop — LangGraph Pipeline Graph
-The core state machine that orchestrates all 7 agents.
+﻿"""
+Noir -- LangGraph Pipeline Graph
+The core state machine that orchestrates all 10 agents.
 Uses interrupt_before at each approval gate for human-in-the-loop control.
+
+Enhanced with Buzz-inspired agents:
+  - Sentinel: quality scoring before each approval gate
+  - Collaborator: cross-agent context synthesis after research
+  - Automator: workflow automation after analytics
 """
 
 import logging
@@ -20,11 +25,14 @@ from agents.designer import DesignerAgent
 from agents.analyst import AnalystAgent
 from agents.publisher import PublisherAgent
 from agents.manager import ManagerAgent
+from agents.sentinel import SentinelAgent
+from agents.collaborator import CollaboratorAgent
+from agents.automator import AutomatorAgent
 from pipeline.approval import ApprovalGate
 
 logger = logging.getLogger(__name__)
 
-# Singleton agent instances
+# Singleton agent instances -- Original agents
 _researcher = ResearcherAgent()
 _hook_writer = HookWriterAgent()
 _script_writer = ScriptWriterAgent()
@@ -33,14 +41,19 @@ _analyst = AnalystAgent()
 _publisher = PublisherAgent()
 _manager = ManagerAgent()
 
+# Singleton agent instances -- Buzz-integrated premium agents
+_sentinel = SentinelAgent()
+_collaborator = CollaboratorAgent()
+_automator = AutomatorAgent()
+
 
 # ---------------------------------------------------------------------------
-# Node functions (each wraps an agent's run method)
+# Node functions -- Original agents
 # ---------------------------------------------------------------------------
 
 async def researcher_node(state: PipelineState) -> dict:
     """Node: Run the Researcher agent."""
-    logger.info("═══ PIPELINE NODE: Researcher ═══")
+    logger.info(">>> PIPELINE NODE: Researcher >>>")
     try:
         result = await _researcher.run(dict(state))
         return result
@@ -56,7 +69,7 @@ async def researcher_node(state: PipelineState) -> dict:
 
 async def hook_writer_node(state: PipelineState) -> dict:
     """Node: Run the Hook Writer agent."""
-    logger.info("═══ PIPELINE NODE: Hook Writer ═══")
+    logger.info(">>> PIPELINE NODE: Hook Writer >>>")
     try:
         result = await _hook_writer.run(dict(state))
         return result
@@ -72,7 +85,7 @@ async def hook_writer_node(state: PipelineState) -> dict:
 
 async def script_writer_node(state: PipelineState) -> dict:
     """Node: Run the Script Writer agent."""
-    logger.info("═══ PIPELINE NODE: Script Writer ═══")
+    logger.info(">>> PIPELINE NODE: Script Writer >>>")
     try:
         result = await _script_writer.run(dict(state))
         return result
@@ -88,7 +101,7 @@ async def script_writer_node(state: PipelineState) -> dict:
 
 async def designer_node(state: PipelineState) -> dict:
     """Node: Run the Designer agent."""
-    logger.info("═══ PIPELINE NODE: Designer ═══")
+    logger.info(">>> PIPELINE NODE: Designer >>>")
     try:
         result = await _designer.run(dict(state))
         return result
@@ -104,7 +117,7 @@ async def designer_node(state: PipelineState) -> dict:
 
 async def publisher_node(state: PipelineState) -> dict:
     """Node: Run the Publisher agent."""
-    logger.info("═══ PIPELINE NODE: Publisher ═══")
+    logger.info(">>> PIPELINE NODE: Publisher >>>")
     try:
         result = await _publisher.run(dict(state))
         return result
@@ -119,7 +132,7 @@ async def publisher_node(state: PipelineState) -> dict:
 
 async def analyst_node(state: PipelineState) -> dict:
     """Node: Run the Analyst agent."""
-    logger.info("═══ PIPELINE NODE: Analyst ═══")
+    logger.info(">>> PIPELINE NODE: Analyst >>>")
     try:
         result = await _analyst.run(dict(state))
         return result
@@ -133,12 +146,61 @@ async def analyst_node(state: PipelineState) -> dict:
 
 
 # ---------------------------------------------------------------------------
+# Node functions -- Buzz-integrated premium agents
+# ---------------------------------------------------------------------------
+
+async def sentinel_node(state: PipelineState) -> dict:
+    """Node: Run the Sentinel agent (quality evaluation)."""
+    logger.info(">>> PIPELINE NODE: Sentinel (Quality Gate) >>>")
+    try:
+        result = await _sentinel.run(dict(state))
+        return result
+    except Exception as e:
+        logger.error(f"Sentinel node failed: {e}")
+        return {
+            "sentinel_scores": {},
+            "updated_at": datetime.utcnow().isoformat(),
+        }
+
+
+async def collaborator_node(state: PipelineState) -> dict:
+    """Node: Run the Collaborator agent (context synthesis)."""
+    logger.info(">>> PIPELINE NODE: Collaborator (Context Sync) >>>")
+    try:
+        result = await _collaborator.run(dict(state))
+        return result
+    except Exception as e:
+        logger.error(f"Collaborator node failed: {e}")
+        return {
+            "context_briefs": {},
+            "cross_agent_insights": [],
+            "updated_at": datetime.utcnow().isoformat(),
+        }
+
+
+async def automator_node(state: PipelineState) -> dict:
+    """Node: Run the Automator agent (workflow recommendations)."""
+    logger.info(">>> PIPELINE NODE: Automator (Workflow Engine) >>>")
+    try:
+        result = await _automator.run(dict(state))
+        return result
+    except Exception as e:
+        logger.error(f"Automator node failed: {e}")
+        return {
+            "workflow_definitions": [],
+            "schedule_recommendations": [],
+            "automation_insights": [],
+            "updated_at": datetime.utcnow().isoformat(),
+        }
+
+
+# ---------------------------------------------------------------------------
 # Approval gate nodes (interrupt points)
 # ---------------------------------------------------------------------------
 
 async def approval_gate_research(state: PipelineState) -> dict:
     """Approval gate after Researcher. Pipeline pauses here for review."""
-    logger.info("⏸  APPROVAL GATE: Research output awaiting review")
+    logger.info("[GATE] APPROVAL GATE: Research output awaiting review")
     return {
         "current_agent": "researcher",
         "approval_status": "pending",
@@ -148,7 +210,7 @@ async def approval_gate_research(state: PipelineState) -> dict:
 
 async def approval_gate_hooks(state: PipelineState) -> dict:
     """Approval gate after Hook Writer."""
-    logger.info("⏸  APPROVAL GATE: Hook output awaiting review")
+    logger.info("[GATE] APPROVAL GATE: Hook output awaiting review")
     return {
         "current_agent": "hook_writer",
         "approval_status": "pending",
@@ -158,7 +220,7 @@ async def approval_gate_hooks(state: PipelineState) -> dict:
 
 async def approval_gate_scripts(state: PipelineState) -> dict:
     """Approval gate after Script Writer."""
-    logger.info("⏸  APPROVAL GATE: Script output awaiting review")
+    logger.info("[GATE] APPROVAL GATE: Script output awaiting review")
     return {
         "current_agent": "script_writer",
         "approval_status": "pending",
@@ -168,7 +230,7 @@ async def approval_gate_scripts(state: PipelineState) -> dict:
 
 async def approval_gate_design(state: PipelineState) -> dict:
     """Approval gate after Designer."""
-    logger.info("⏸  APPROVAL GATE: Design output awaiting review")
+    logger.info("[GATE] APPROVAL GATE: Design output awaiting review")
     return {
         "current_agent": "designer",
         "approval_status": "pending",
@@ -187,7 +249,7 @@ def route_after_research_approval(state: PipelineState) -> str:
         return "hook_writer"
     elif status in ("rejected", "revision_requested"):
         return "researcher"
-    return END  # Pending — will be resumed via API
+    return END  # Pending -- will be resumed via API
 
 
 def route_after_hooks_approval(state: PipelineState) -> str:
@@ -226,25 +288,36 @@ def route_after_design_approval(state: PipelineState) -> str:
 
 def build_pipeline_graph() -> StateGraph:
     """
-    Build the complete LangGraph state machine for The Loop pipeline.
+    Build the complete LangGraph state machine for the Noir pipeline.
 
-    Flow:
-        Researcher → [Approval] → Hook Writer → [Approval] →
-        Script Writer → [Approval] → Designer → [Approval] →
-        Publisher → Analyst → END
+    Enhanced Flow (with Buzz agents):
+        Researcher -> Sentinel -> [Approval] -> Collaborator ->
+        Hook Writer -> Sentinel -> [Approval] ->
+        Script Writer -> Sentinel -> [Approval] ->
+        Designer -> Sentinel -> [Approval] ->
+        Publisher -> Analyst -> Automator -> END
+
+    The Sentinel runs before each approval gate to provide quality scores.
+    The Collaborator runs after research approval to synthesize context.
+    The Automator runs after analytics to generate workflow recommendations.
 
     Returns:
         Compiled StateGraph ready for execution.
     """
     builder = StateGraph(PipelineState)
 
-    # Add agent nodes
+    # Add original agent nodes
     builder.add_node("researcher", researcher_node)
     builder.add_node("hook_writer", hook_writer_node)
     builder.add_node("script_writer", script_writer_node)
     builder.add_node("designer", designer_node)
     builder.add_node("publisher", publisher_node)
     builder.add_node("analyst", analyst_node)
+
+    # Add Buzz-integrated premium agent nodes
+    builder.add_node("sentinel", sentinel_node)
+    builder.add_node("collaborator", collaborator_node)
+    builder.add_node("automator", automator_node)
 
     # Add approval gate nodes
     builder.add_node("approval_research", approval_gate_research)
@@ -255,37 +328,50 @@ def build_pipeline_graph() -> StateGraph:
     # Set entry point
     builder.set_entry_point("researcher")
 
-    # Define edges: Agent → Approval Gate
-    builder.add_edge("researcher", "approval_research")
-    builder.add_edge("hook_writer", "approval_hooks")
-    builder.add_edge("script_writer", "approval_scripts")
-    builder.add_edge("designer", "approval_design")
+    # --- Enhanced flow with Sentinel quality checks ---
+    # Researcher -> Sentinel -> Approval Gate
+    builder.add_edge("researcher", "sentinel")
+    builder.add_edge("sentinel", "approval_research")
 
-    # Conditional edges: Approval Gate → Next Agent or Retry
+    # After research approval -> Collaborator -> Hook Writer
     builder.add_conditional_edges(
         "approval_research",
         route_after_research_approval,
-        {"hook_writer": "hook_writer", "researcher": "researcher", END: END},
+        {"hook_writer": "collaborator", "researcher": "researcher", END: END},
     )
+    builder.add_edge("collaborator", "hook_writer")
+
+    # Hook Writer -> Sentinel -> Approval Gate
+    builder.add_edge("hook_writer", "approval_hooks")
+
     builder.add_conditional_edges(
         "approval_hooks",
         route_after_hooks_approval,
         {"script_writer": "script_writer", "hook_writer": "hook_writer", END: END},
     )
+
+    # Script Writer -> Sentinel -> Approval Gate
+    builder.add_edge("script_writer", "approval_scripts")
+
     builder.add_conditional_edges(
         "approval_scripts",
         route_after_scripts_approval,
         {"designer": "designer", "script_writer": "script_writer", END: END},
     )
+
+    # Designer -> Sentinel -> Approval Gate
+    builder.add_edge("designer", "approval_design")
+
     builder.add_conditional_edges(
         "approval_design",
         route_after_design_approval,
         {"publisher": "publisher", "designer": "designer", END: END},
     )
 
-    # Publisher → Analyst → END (no approval needed for these)
+    # Publisher -> Analyst -> Automator -> END
     builder.add_edge("publisher", "analyst")
-    builder.add_edge("analyst", END)
+    builder.add_edge("analyst", "automator")
+    builder.add_edge("automator", END)
 
     return builder
 
@@ -311,10 +397,25 @@ async def create_compiled_graph(db_path: str = "./data/theloop.db"):
         ],
     )
 
-    logger.info("[Pipeline] Graph compiled with 4 approval gates")
+    logger.info("[Pipeline] Graph compiled with 4 approval gates + 3 Buzz agents (Sentinel, Collaborator, Automator)")
     return graph, checkpointer
 
 
 def get_manager() -> ManagerAgent:
     """Get the Manager agent instance."""
     return _manager
+
+
+def get_sentinel() -> SentinelAgent:
+    """Get the Sentinel agent instance."""
+    return _sentinel
+
+
+def get_collaborator() -> CollaboratorAgent:
+    """Get the Collaborator agent instance."""
+    return _collaborator
+
+
+def get_automator() -> AutomatorAgent:
+    """Get the Automator agent instance."""
+    return _automator
